@@ -1,2 +1,5 @@
-Version 1.0	- 3/23/2018 -  This repository is to keep track of the update of the LunaH software and bitstream files from 2014 to 2017 in SDk. 
+Version 1.0	- 3/23/2018 -	This repository is to keep track of the update of the LunaH software and bitstream files from 2014 to 2017 in SDk. 
 	
+Version 1.1 - 4/2/2018	-	the HW platform files have changed a few times, but we have gotten PSD from multiple detectors out all at once. Currently this configuration works, but the user must use a full integration time that is shorter than 6000, I have been using 5500 to be safe. This issue is known to Meg and she is working on it.
+	- No major changes from the previous version.
+	- Working towards a large update in the next few pushes to bring the emulator code into this project and start working towards the calibration tests in May/June.
