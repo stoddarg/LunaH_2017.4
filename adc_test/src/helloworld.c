@@ -112,10 +112,10 @@ int main()
 	//IIC1 = thermometer
 	XIicPs Iic;
 	//*******************Receive and Process Packets **********************//
-	Xil_Out32 (XPAR_AXI_GPIO_0_BASEADDR, 38-38);	//12 bits available to specify the  a number //can't send a signed number, just send 0
-	Xil_Out32 (XPAR_AXI_GPIO_1_BASEADDR, 73-40);	//arbitrary 40 subtracted to offset the FPGA code
-	Xil_Out32 (XPAR_AXI_GPIO_2_BASEADDR, 169-40);
-	Xil_Out32 (XPAR_AXI_GPIO_3_BASEADDR, 1475-40);	//update this value to the nominal 1551 when Meg ships another bitstream 3/21
+	Xil_Out32 (XPAR_AXI_GPIO_0_BASEADDR, 38);	//12 bits available to specify the  a number //can't send a signed (negative) number; send 0 as a minimum
+	Xil_Out32 (XPAR_AXI_GPIO_1_BASEADDR, 73);
+	Xil_Out32 (XPAR_AXI_GPIO_2_BASEADDR, 169);
+	Xil_Out32 (XPAR_AXI_GPIO_3_BASEADDR, 1475);
 	Xil_Out32 (XPAR_AXI_GPIO_6_BASEADDR, 0);
 	Xil_Out32 (XPAR_AXI_GPIO_7_BASEADDR, 0);
 	Xil_Out32 (XPAR_AXI_GPIO_10_BASEADDR, 11000);	//max of 2^14 (16384), should be able to filter noise at 11k
@@ -352,10 +352,14 @@ int main()
 			break;
 
 		case 4: //Set Integration Times
-			setIntsArray[4] = ((Xil_In32(XPAR_AXI_GPIO_0_BASEADDR) - 1 + 40) * 4) - 200;	//40 is to account for arbitrary offset
-			setIntsArray[5] = ((Xil_In32(XPAR_AXI_GPIO_1_BASEADDR) - 1 + 40) * 4) - 200;
-			setIntsArray[6] = ((Xil_In32(XPAR_AXI_GPIO_2_BASEADDR) - 1 + 40) * 4) - 200;
-			setIntsArray[7] = ((Xil_In32(XPAR_AXI_GPIO_3_BASEADDR) - 1 + 40) * 4) - 200;
+//			setIntsArray[4] = ((Xil_In32(XPAR_AXI_GPIO_0_BASEADDR) - 1) * 4) - 200;	//40 is to account for arbitrary offset
+//			setIntsArray[5] = ((Xil_In32(XPAR_AXI_GPIO_1_BASEADDR) - 1) * 4) - 200;
+//			setIntsArray[6] = ((Xil_In32(XPAR_AXI_GPIO_2_BASEADDR) - 1) * 4) - 200;
+//			setIntsArray[7] = ((Xil_In32(XPAR_AXI_GPIO_3_BASEADDR) - 1) * 4) - 200;
+			setIntsArray[4] = -52 + ((int)Xil_In32(XPAR_AXI_GPIO_0_BASEADDR))*4;
+			setIntsArray[5] = -52 + ((int)Xil_In32(XPAR_AXI_GPIO_1_BASEADDR))*4;
+			setIntsArray[6] = -52 + ((int)Xil_In32(XPAR_AXI_GPIO_2_BASEADDR))*4;
+			setIntsArray[7] = -52 + ((int)Xil_In32(XPAR_AXI_GPIO_3_BASEADDR))*4;
 
 			xil_printf("\n\r Existing Integration Times \n\r");
 			xil_printf(" Time = 0 ns is when the Pulse Crossed Threshold \n\r");
@@ -875,10 +879,15 @@ void SetIntegrationTimes(int * setIntsArray, int * setSamples){
 		sleep(1);
 	}
 	else
-	{	setSamples[0] = ((setIntsArray[0]+52)/4);	//subtract 40 to offset the number in the FPGA
-		setSamples[1] = ((setIntsArray[1]+52)/4);
-		setSamples[2] = ((setIntsArray[2]+52)/4);
-		setSamples[3] = ((setIntsArray[3]+52)/4);
+	{
+//		setSamples[0] = ((setIntsArray[0] + 200) / 4) + 1;
+//		setSamples[1] = ((setIntsArray[1] + 200) / 4) + 1;
+//		setSamples[2] = ((setIntsArray[2] + 200) / 4) + 1;
+//		setSamples[3] = ((setIntsArray[3] + 200) / 4) + 1;
+		setSamples[0] = ((u32)((setIntsArray[0]+52)/4));
+		setSamples[1] = ((u32)((setIntsArray[1]+52)/4));
+		setSamples[2] = ((u32)((setIntsArray[2]+52)/4));
+		setSamples[3] = ((u32)((setIntsArray[3]+52)/4));
 
 		Xil_Out32 (XPAR_AXI_GPIO_0_BASEADDR, setSamples[0]);
 		Xil_Out32 (XPAR_AXI_GPIO_1_BASEADDR, setSamples[1]);
@@ -894,10 +903,10 @@ void SetIntegrationTimes(int * setIntsArray, int * setSamples){
 		full_samples = Xil_In32 (XPAR_AXI_GPIO_3_BASEADDR);		//full integral window
 
 		xil_printf("\n\r  Inputs Rounded to the Nearest 4 ns : Number of Samples\n\r");
-		xil_printf("  Baseline Integral Window  [-200ns,%dns]: %d \n\r", ((baseline_samples *4) -52), baseline_samples + 38);
-		xil_printf("  Short Integral Window 	  [-200ns,%dns]: %d \n\r",((short_samples *4) -52), short_samples + 38);
-		xil_printf("  Long Integral Window      [-200ns,%dns]: %d \n\r",((long_samples*4) -52), long_samples + 38);
-		xil_printf("  Full Integral Window      [-200ns,%dns]: %d \n\r",((full_samples*4)-52), full_samples + 38);
+		xil_printf("  Baseline Integral Window  [-200ns,%dns]: %d \n\r", (baseline_samples*4)-52, 38+baseline_samples);
+		xil_printf("  Short Integral Window 	  [-200ns,%dns]: %d \n\r",(short_samples*4)-52, 38+short_samples);
+		xil_printf("  Long Integral Window      [-200ns,%dns]: %d \n\r",(long_samples*4)-52, 38+long_samples);
+		xil_printf("  Full Integral Window      [-200ns,%dns]: %d \n\r",(full_samples*4)-52, 38+full_samples);
 	}
 
 	return;
@@ -933,6 +942,8 @@ int PrintData( ){
 	}
 
 	ffs_res = f_open(&data_file, c_data_file, FA_WRITE|FA_READ|FA_OPEN_ALWAYS);	//open the file
+	if(ffs_res)
+		xil_printf("Could not open file %d", ffs_res);
 	ffs_res = f_lseek(&data_file, file_size(&data_file));	//seek to the end of the file
 	ffs_res = f_write(&data_file, data_array, sizeof(u32)*4096, &numBytesWritten);	//write the data
 	ffs_res = f_close(&data_file);
@@ -994,29 +1005,20 @@ int DAQ(){
 
 int getWFDAQ(){
 	int buffsize = 0; 	//BRAM buffer size
-	//int dram_addr;	// DRAM Address
 
 	XUartPs_SetOptions(&Uart_PS,XUARTPS_OPTION_RESET_RX);
 
 	Xil_Out32 (XPAR_AXI_DMA_0_BASEADDR + 0x48, 0xa000000); 		// DMA Transfer Step 1
 	Xil_Out32 (XPAR_AXI_DMA_0_BASEADDR + 0x58 , 65536);			// DMA Transfer Step 2
-	sleep(1);						// Built in Latency ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 1 s
+	sleep(1);
 	ClearBuffers();
-	//for (dram_addr = 0xa000000; dram_addr <= 0xA004000; dram_addr+=4){Xil_In32(dram_addr);}
-//	xil_printf("in getWFDAQ\r\n");
 
 	while(1){
-//		if (!sw) { sw = XGpioPs_ReadPin(&Gpio, SW_BREAK_GPIO); } //read pin
 		XUartPs_Recv(&Uart_PS, &RecvBuffer, 32);
 		if ( RecvBuffer[0] == 'q' ) { sw = 1; }
 		if(sw) { return sw;	}
 
 		buffsize = Xil_In32 (XPAR_AXI_GPIO_11_BASEADDR);	// AA write pointer // tells how far the system has read in the AA module
-//		xil_printf("checking buffsize: %d\r\n", buffsize);
-//		xil_printf("read count: %d\r\n",Xil_In32 (XPAR_AXI_GPIO_19_BASEADDR));
-//		xil_printf("write address: %d\r\n",Xil_In32(XPAR_AXI_GPIO_13_BASEADDR));
-		usleep(1);
-//		xil_printf("write address: %d\r\n",Xil_In32(XPAR_AXI_GPIO_13_BASEADDR));
 		if(buffsize == 1)
 		{
 			Xil_Out32 (XPAR_AXI_GPIO_15_BASEADDR, 1);				// init mux to transfer data between integrater modules to DMA
@@ -1024,9 +1026,8 @@ int getWFDAQ(){
 			Xil_Out32 (XPAR_AXI_DMA_0_BASEADDR + 0x58 , 65536);
 			usleep(54); 												// this will change
 			Xil_Out32 (XPAR_AXI_GPIO_15_BASEADDR, 0);
-			PrintData();
 
-//			xil_printf("read count: %d\r\n",Xil_In32 (XPAR_AXI_GPIO_19_BASEADDR));
+			PrintData();
 			ClearBuffers();
 		}
 	}
